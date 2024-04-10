@@ -47,6 +47,36 @@ class PlantByID(Resource):
         plant = Plant.query.filter_by(id=id).first().to_dict()
         return make_response(jsonify(plant), 200)
 
+    def patch(self, id):
+        plant = Plant.query.get(id)
+        if not plant:
+            return {"error": "Plant not found"}, 404
+
+        data = request.get_json()
+        for key, value in data.items():
+            setattr(plant, key, value)
+
+        # Commit only if plant was found and potentially updated
+        if plant:
+            db.session.commit()
+            response_data = {
+                "id": plant.id,
+                "is_in_stock": plant.is_in_stock,
+            }
+            return jsonify(response_data)
+        else:
+            return {"error": "Plant not found"}, 404
+
+    def delete(self, id):
+        plant = Plant.query.get(id)
+        if not plant:
+            return {"error": "Plant not found"}, 404
+
+        db.session.delete(plant)
+        db.session.commit()
+
+        return {"message": "Plant deleted successfully"}, 200
+
 
 api.add_resource(PlantByID, '/plants/<int:id>')
 
